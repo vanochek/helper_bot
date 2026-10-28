@@ -11,12 +11,14 @@ from starlette.responses import JSONResponse, Response
 from helper_bot.api import router
 from helper_bot.chat_api import router as chat_router
 from helper_bot.config import Settings
+from helper_bot.speech_api import router as speech_router
 from helper_bot.temporal_api import router as temporal_router
 
 app = FastAPI(title="Голосовой помощник", version="0.1.0")
 WEB = Path(__file__).parent / "web"
 app.mount("/static", StaticFiles(directory=WEB), name="static")
 app.include_router(router)
+app.include_router(speech_router)
 app.include_router(chat_router)
 app.include_router(temporal_router)
 

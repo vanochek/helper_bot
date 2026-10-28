@@ -41,3 +41,5 @@ limit: 1–100 (по умолчанию 50), offset: 0–10000. Порядок: 
 [Разрешение относительных дат: POST /temporal/resolve](TIME.md).
 
 [Текстовый диалог: POST/GET /chat/messages](CHAT.md).
+
+[Распознавание аудио: POST /speech/transcriptions](VOICE.md).

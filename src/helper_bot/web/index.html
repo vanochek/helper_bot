@@ -2,12 +2,12 @@
 <html lang="ru">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Личный помощник</title><link rel="stylesheet" href="/static/style.css">
-<script src="/static/app.js" defer></script></head>
+<script src="/static/app.js" defer></script><script src="/static/voice.js" defer></script></head>
 <body><main>
 <header><h1>Личный помощник</h1><p>Задачи, напоминания и встречи — напишите своими словами.</p></header>
 <p id="zone"></p>
 <p class="note">История привязана к этому браузеру. Очистка cookie лишит доступа к записям.
-Для понимания запросов их текст отправляется в OpenAI. Голосовой ввод появится позже.</p>
+Текст и записанный голос отправляются в OpenAI для обработки. Запись начинается только по кнопке.</p>
 <section id="messages" aria-label="История диалога" aria-live="polite"></section>
 <p id="status" role="status"></p>
 <form id="form"><label for="message">Ваше сообщение</label>
@@ -15,5 +15,10 @@
 <div class="actions"><button id="send" type="submit" disabled>Отправить</button>
 <button id="cancel" type="button" disabled>Отменить уточнение</button>
 <button id="retry" type="button" hidden>Повторить отправку</button></div></form>
+<div class="actions"><button id="record" type="button" disabled>Записать голос</button>
+<button id="discard-audio" type="button" hidden>Отменить запись</button>
+<button id="stop-speech" type="button">Остановить озвучивание</button></div>
+<label><input id="speak" type="checkbox"> Озвучивать новые ответы</label>
+<p id="voice-status" role="status"></p>
 <p class="note">Например: «Какие планы на завтра?» или «Найди задачу про презентацию».</p>
 </main></body></html>

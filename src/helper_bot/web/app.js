@@ -19,7 +19,7 @@ function bubble(text, role) {
   messages.scrollTop = messages.scrollHeight;
   return node;
 }
-function answer(reply) {
+function answer(reply, fresh = false) {
   const node = bubble(reply.text, "assistant");
   if (reply.entries?.length) {
     const list = document.createElement("ul"); list.className = "entries";
@@ -34,6 +34,7 @@ function answer(reply) {
     }
     node.append(list);
   }
+  if (fresh) document.dispatchEvent(new CustomEvent("assistant-reply", {detail: node.textContent}));
 }
 async function request(path, options = {}) {
   const response = await fetch(path, {credentials: "same-origin", ...options});
@@ -56,7 +57,7 @@ async function submit(text, repeat = false) {
     const reply = await request("/api/v1/chat/messages", {
       method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(pending)
     });
-    answer(reply); pending = null; sessionStorage.removeItem(pendingKey);
+    answer(reply, true); pending = null; sessionStorage.removeItem(pendingKey);
     input.value = ""; statusLine.textContent = "";
   } catch (error) {
     statusLine.textContent = `${error.message} Повтор отправит тот же запрос без дублирования.`;
