@@ -1,0 +1,3 @@
+Миграции PostgreSQL. Создание: python -m uv run alembic revision -m "описание".
+Применение: python -m uv run alembic upgrade head.
+Предметная схема будет добавлена на следующем этапе.
