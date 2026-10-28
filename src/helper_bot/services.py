@@ -1,9 +1,9 @@
-from datetime import date, datetime, time
+from datetime import date
 from uuid import UUID
-from zoneinfo import ZoneInfo
 
 from helper_bot.models import BrowserSession, Entry
 from helper_bot.storage import EntryRepository, NewEntry
+from helper_bot.temporal import period_bounds
 
 
 class EntryService:
@@ -24,12 +24,16 @@ class EntryService:
     ) -> list[Entry]:
         if (start is None) != (end is None) or (start and end and start >= end):
             raise ValueError("Задайте обе границы: начало строго раньше конца")
-        zone = ZoneInfo(self.owner.timezone)
+        start_at, end_at = (
+            period_bounds(start, end, self.owner.timezone)
+            if start is not None and end is not None
+            else (None, None)
+        )
         return self.repository.find(
             start,
             end,
-            datetime.combine(start, time.min, zone) if start else None,
-            datetime.combine(end, time.min, zone) if end else None,
+            start_at,
+            end_at,
             query,
             limit,
             offset,

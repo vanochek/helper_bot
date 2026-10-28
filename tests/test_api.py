@@ -121,3 +121,41 @@ def test_failed_commit_does_not_confirm_or_save(clients, monkeypatch):
     response = first.get("/api/v1/entries")
     assert response.json() == []
     assert response.headers["Cache-Control"] == "no-store"
+
+
+def test_temporal_uses_server_clock_and_session_zone(clients):
+    from datetime import UTC, datetime
+
+    from helper_bot.temporal_api import current_time
+
+    first, second = clients
+    payload = {"candidate": {"relation": "tomorrow", "local_time": "10:00"}, "purpose": "meeting"}
+    assert first.post("/api/v1/temporal/resolve", json=payload).status_code == 401
+    start(first)
+    start(second, "America/New_York")
+    app.dependency_overrides[current_time] = lambda: datetime(2026, 12, 31, 22, tzinfo=UTC)
+    result = first.post("/api/v1/temporal/resolve", json=payload)
+    assert result.status_code == 200
+    assert result.json()["scheduled_at"] == "2027-01-02T07:00:00Z"
+    assert (
+        second.post("/api/v1/temporal/resolve", json=payload).json()["scheduled_at"]
+        == "2027-01-01T15:00:00Z"
+    )
+    assert first.get("/api/v1/entries").json() == []
+    assert (
+        first.post("/api/v1/temporal/resolve", json={**payload, "now": "2020-01-01"}).status_code
+        == 422
+    )
+    assert (
+        first.post(
+            "/api/v1/temporal/resolve", json=payload, headers={"Origin": "https://evil.example"}
+        ).status_code
+        == 403
+    )
+
+
+def test_calendar_query_rejects_skipped_midnight(clients):
+    first, _ = clients
+    start(first, "Pacific/Apia")
+    response = first.get("/api/v1/entries", params={"start": "2011-12-30", "end": "2011-12-31"})
+    assert response.status_code == 422

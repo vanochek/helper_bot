@@ -7,9 +7,11 @@ from starlette.responses import JSONResponse, Response
 
 from helper_bot.api import router
 from helper_bot.config import Settings
+from helper_bot.temporal_api import router as temporal_router
 
 app = FastAPI(title="Голосовой помощник", version="0.1.0")
 app.include_router(router)
+app.include_router(temporal_router)
 
 
 @app.middleware("http")
