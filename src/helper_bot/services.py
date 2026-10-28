@@ -20,12 +20,20 @@ class EntryService:
         return self.repository.get(entry_id)
 
     def list(
-        self, start: date | None, end: date | None, query: str | None, limit: int, offset: int
+        self,
+        start: date | None,
+        end: date | None,
+        query: str | None,
+        limit: int,
+        offset: int,
+        *,
+        kind: str | None = None,
+        timezone: str | None = None,
     ) -> list[Entry]:
         if (start is None) != (end is None) or (start and end and start >= end):
             raise ValueError("Задайте обе границы: начало строго раньше конца")
         start_at, end_at = (
-            period_bounds(start, end, self.owner.timezone)
+            period_bounds(start, end, timezone or self.owner.timezone)
             if start is not None and end is not None
             else (None, None)
         )
@@ -37,4 +45,5 @@ class EntryService:
             query,
             limit,
             offset,
+            kind=kind,
         )

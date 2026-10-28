@@ -39,3 +39,5 @@ limit: 1–100 (по умолчанию 50), offset: 0–10000. Порядок: 
 защита входят в этапы 9–10.
 
 [Разрешение относительных дат: POST /temporal/resolve](TIME.md).
+
+[Текстовый диалог: POST/GET /chat/messages](CHAT.md).

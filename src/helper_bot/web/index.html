@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="ru">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Личный помощник</title><link rel="stylesheet" href="/static/style.css">
+<script src="/static/app.js" defer></script></head>
+<body><main>
+<header><h1>Личный помощник</h1><p>Задачи, напоминания и встречи — напишите своими словами.</p></header>
+<p id="zone"></p>
+<p class="note">История привязана к этому браузеру. Очистка cookie лишит доступа к записям.
+Для понимания запросов их текст отправляется в OpenAI. Голосовой ввод появится позже.</p>
+<section id="messages" aria-label="История диалога" aria-live="polite"></section>
+<p id="status" role="status"></p>
+<form id="form"><label for="message">Ваше сообщение</label>
+<textarea id="message" maxlength="2000" rows="3" required placeholder="Напомни завтра в 10 позвонить Ивану"></textarea>
+<div class="actions"><button id="send" type="submit" disabled>Отправить</button>
+<button id="cancel" type="button" disabled>Отменить уточнение</button>
+<button id="retry" type="button" hidden>Повторить отправку</button></div></form>
+<p class="note">Например: «Какие планы на завтра?» или «Найди задачу про презентацию».</p>
+</main></body></html>

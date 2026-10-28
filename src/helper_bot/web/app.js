@@ -1,0 +1,106 @@
+"use strict";
+const messages = document.querySelector("#messages");
+const input = document.querySelector("#message");
+const send = document.querySelector("#send");
+const cancel = document.querySelector("#cancel");
+const retry = document.querySelector("#retry");
+const statusLine = document.querySelector("#status");
+let pending = null;
+const pendingKey = "helper-pending-message";
+let timezone = "UTC";
+function busy(value) {
+  send.disabled = value; cancel.disabled = value; input.disabled = value; retry.disabled = value;
+}
+function bubble(text, role) {
+  const node = document.createElement("div");
+  node.className = `message ${role}`;
+  node.textContent = text;
+  messages.append(node);
+  messages.scrollTop = messages.scrollHeight;
+  return node;
+}
+function answer(reply) {
+  const node = bubble(reply.text, "assistant");
+  if (reply.entries?.length) {
+    const list = document.createElement("ul"); list.className = "entries";
+    const names = {task: "Задача", reminder: "Напоминание", meeting: "Встреча"};
+    for (const entry of reply.entries) {
+      const item = document.createElement("li");
+      const when = entry.scheduled_at ? new Intl.DateTimeFormat("ru-RU", {
+        dateStyle: "medium", timeStyle: "short", timeZone: timezone
+      }).format(new Date(entry.scheduled_at)) : (entry.scheduled_on || "Без срока");
+      item.textContent = `${names[entry.kind]}: ${entry.title} — ${when}`;
+      list.append(item);
+    }
+    node.append(list);
+  }
+}
+async function request(path, options = {}) {
+  const response = await fetch(path, {credentials: "same-origin", ...options});
+  const body = await response.json();
+  if (!response.ok) {
+    const error = new Error(typeof body.detail === "string" ? body.detail : "Проверьте параметры запроса.");
+    error.status = response.status;
+    throw error;
+  }
+  return body;
+}
+async function submit(text, repeat = false) {
+  busy(true); retry.hidden = true; statusLine.textContent = "Обрабатываю…";
+  if (!repeat) {
+    pending = {request_id: crypto.randomUUID(), text};
+    sessionStorage.setItem(pendingKey, JSON.stringify(pending));
+    bubble(text, "user");
+  }
+  try {
+    const reply = await request("/api/v1/chat/messages", {
+      method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(pending)
+    });
+    answer(reply); pending = null; sessionStorage.removeItem(pendingKey);
+    input.value = ""; statusLine.textContent = "";
+  } catch (error) {
+    statusLine.textContent = `${error.message} Повтор отправит тот же запрос без дублирования.`;
+    retry.hidden = false;
+    if ([400, 403, 409, 422].includes(error.status)) {
+      pending = null; sessionStorage.removeItem(pendingKey); retry.hidden = true;
+      statusLine.textContent = error.message;
+    }
+  } finally {
+    busy(false);
+    // До выяснения результата нельзя заменить запрос новым идентификатором.
+    if (pending) { send.disabled = true; cancel.disabled = true; input.disabled = true; }
+    else { input.focus(); }
+  }
+}
+document.querySelector("#form").addEventListener("submit", event => {
+  event.preventDefault(); const text = input.value.trim(); if (text) submit(text);
+});
+cancel.addEventListener("click", () => submit("Отмена"));
+retry.addEventListener("click", () => submit(pending.text, true));
+async function init() {
+  busy(true);
+  try {
+    timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const session = await request("/api/v1/session", {method: "POST",
+      headers: {"Content-Type": "application/json"}, body: JSON.stringify({timezone})});
+    timezone = session.timezone;
+    document.querySelector("#zone").textContent = `Часовой пояс: ${timezone}`;
+    const history = await request("/api/v1/chat/messages");
+    for (const row of history) {
+      bubble(row.text, "user"); answer(row.response);
+    }
+    busy(false); input.focus();
+    const stored = sessionStorage.getItem(pendingKey);
+    if (stored) {
+      pending = JSON.parse(stored);
+      if (history.some(row => row.request_id === pending.request_id)) {
+        pending = null; sessionStorage.removeItem(pendingKey);
+      } else {
+        bubble(pending.text, "user"); send.disabled = true; cancel.disabled = true;
+        input.disabled = true; retry.hidden = false;
+        statusLine.textContent = "Остался незавершённый запрос. Повторите отправку для проверки результата.";
+      }
+    }
+  } catch (error) { statusLine.textContent = `${error.message} Обновите страницу для повтора.`; }
+}
+init();

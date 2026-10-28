@@ -1,16 +1,23 @@
+from pathlib import Path
+
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import SQLAlchemyError
 from starlette.middleware.base import RequestResponseEndpoint
 from starlette.responses import JSONResponse, Response
 
 from helper_bot.api import router
+from helper_bot.chat_api import router as chat_router
 from helper_bot.config import Settings
 from helper_bot.temporal_api import router as temporal_router
 
 app = FastAPI(title="Голосовой помощник", version="0.1.0")
+WEB = Path(__file__).parent / "web"
+app.mount("/static", StaticFiles(directory=WEB), name="static")
 app.include_router(router)
+app.include_router(chat_router)
 app.include_router(temporal_router)
 
 
@@ -45,10 +52,6 @@ def ready() -> JSONResponse:
         engine.dispose()
 
 
-@app.get("/", response_class=HTMLResponse)
-def index() -> str:
-    return (
-        '<html lang="ru"><meta charset="utf-8"><title>Помощник</title>'
-        "<h1>Голосовой помощник</h1><p>Окружение подготовлено.</p>"
-        "<p>Сценарии ассистента в разработке.</p></html>"
-    )
+@app.get("/")
+def index() -> FileResponse:
+    return FileResponse(WEB / "index.html")

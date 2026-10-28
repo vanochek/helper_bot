@@ -78,10 +78,14 @@ class EntryRepository:
         query: str | None,
         limit: int,
         offset: int,
+        *,
+        kind: str | None = None,
     ) -> list[Entry]:
         if not 1 <= limit <= 100 or not 0 <= offset <= 10000:
             raise ValueError("Некорректная пагинация")
         statement = select(Entry).where(Entry.session_id == self.owner_id)
+        if kind is not None:
+            statement = statement.where(Entry.kind == kind)
         if start is not None and end is not None and start_at is not None and end_at is not None:
             statement = statement.where(
                 or_(

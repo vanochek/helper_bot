@@ -2,7 +2,7 @@ from datetime import date, datetime
 from uuid import UUID, uuid4
 
 from sqlalchemy import CheckConstraint, Computed, DateTime, ForeignKey, Index, String, func
-from sqlalchemy.dialects.postgresql import TSVECTOR
+from sqlalchemy.dialects.postgresql import JSONB, TSVECTOR
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -15,6 +15,18 @@ class BrowserSession(Base):
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     token_hash: Mapped[str] = mapped_column(String(64), unique=True)
     timezone: Mapped[str] = mapped_column(String(100))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    draft: Mapped[dict[str, object] | None] = mapped_column(JSONB)
+
+
+class ChatMessage(Base):
+    __tablename__ = "chat_messages"
+    session_id: Mapped[UUID] = mapped_column(
+        ForeignKey("browser_sessions.id", ondelete="CASCADE"), primary_key=True
+    )
+    request_id: Mapped[UUID] = mapped_column(primary_key=True)
+    text: Mapped[str] = mapped_column(String(2000))
+    response: Mapped[dict[str, object]] = mapped_column(JSONB)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
