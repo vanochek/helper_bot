@@ -1,12 +1,17 @@
 from alembic import context
-from sqlalchemy import MetaData, create_engine
+from sqlalchemy import create_engine
 
 from helper_bot.config import Settings
+from helper_bot.models import Base
 
-metadata = MetaData()
+metadata = Base.metadata
 
 if context.is_offline_mode():
     context.configure(url=Settings().database_url, target_metadata=metadata, literal_binds=True)
+    with context.begin_transaction():
+        context.run_migrations()
+elif context.config.attributes.get("connection") is not None:
+    context.configure(connection=context.config.attributes["connection"], target_metadata=metadata)
     with context.begin_transaction():
         context.run_migrations()
 else:
