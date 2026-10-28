@@ -8,6 +8,18 @@ from sqlalchemy import create_engine, text
 from helper_bot.config import Settings
 
 
+@pytest.fixture(autouse=True)
+def reset_request_limits():
+    from helper_bot.guardrails import Guardrails
+    from helper_bot.main import app
+
+    layer = app.middleware_stack
+    while layer is not None:
+        if isinstance(layer, Guardrails):
+            layer.buckets.clear()
+        layer = getattr(layer, "app", None)
+
+
 @pytest.fixture
 def database():
     engine = create_engine(Settings().database_url, connect_args={"connect_timeout": 5})

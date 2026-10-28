@@ -9,7 +9,8 @@ LLM не выполняет SQL и не подтверждает несохра�
 Не логировать речь, личные записи, ключи. Изменения схемы — только Alembic.
 Не добавлять микросервисы, брокеры или CI/CD без отдельной потребности.
 
-Команды: python dev.py bootstrap, check, smoke, serve, sync-agents, doctor.
+Команды: python dev.py bootstrap, check, smoke, serve, sync-agents, doctor,
+backup, restore-check [файл], restore-new [файл]. Эксплуатация — docs/OPERATIONS.md.
 Зависимости фиксируются uv.lock, обновляются осознанно с проверками.
 Тесты домена должны работать без платного API. Проверки не ослаблять ради успешного результата.
 После изменения поведения обновлять README, STATE, ROADMAP и решения по необходимости.

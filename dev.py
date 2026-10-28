@@ -64,13 +64,21 @@ def main() -> None:
         uv("run", "--locked", "alembic", "upgrade", "head")
         uv("run", "--locked", "python", "scripts/smoke.py")
     elif command == "serve":
-        uv("run", "--locked", "uvicorn", "helper_bot.main:app", "--reload")
+        uv("run", "--locked", "uvicorn", "helper_bot.main:app", "--reload", "--no-access-log")
+    elif command in {"backup", "restore-check", "restore-new"}:
+        action = {"backup": "backup", "restore-check": "verify", "restore-new": "restore-new"}[
+            command
+        ]
+        run(sys.executable, "scripts/backup.py", action, *sys.argv[2:])
     elif command == "doctor":
         run("git", "--version")
         uv("--version")
         run("docker", "info", "--format", "{{.ServerVersion}}")
     else:
-        print("Команды: bootstrap, check, smoke, serve, doctor, sync-agents [--check]")
+        print(
+            "Команды: bootstrap, check, smoke, serve, doctor, sync-agents [--check], "
+            "backup, restore-check [файл], restore-new [файл]"
+        )
         if command != "help":
             raise SystemExit(2)
 

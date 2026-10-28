@@ -11,6 +11,7 @@ from starlette.responses import JSONResponse, Response
 from helper_bot.api import router
 from helper_bot.chat_api import router as chat_router
 from helper_bot.config import Settings
+from helper_bot.guardrails import Guardrails
 from helper_bot.speech_api import router as speech_router
 from helper_bot.temporal_api import router as temporal_router
 
@@ -21,6 +22,7 @@ app.include_router(router)
 app.include_router(speech_router)
 app.include_router(chat_router)
 app.include_router(temporal_router)
+app.add_middleware(Guardrails)
 
 
 @app.middleware("http")
@@ -47,6 +49,9 @@ def ready() -> JSONResponse:
     try:
         with engine.connect() as connection:
             connection.execute(text("SELECT 1"))
+            connection.execute(text("SELECT id, draft FROM browser_sessions LIMIT 0"))
+            connection.execute(text("SELECT id, search_vector FROM entries LIMIT 0"))
+            connection.execute(text("SELECT request_id, response FROM chat_messages LIMIT 0"))
         return JSONResponse({"status": "ok"})
     except SQLAlchemyError:
         return JSONResponse({"status": "unavailable"}, status_code=503)
