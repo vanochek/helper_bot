@@ -36,7 +36,8 @@ LLM не выполняет SQL и не подтверждает несохра�
 Не добавлять микросервисы, брокеры или CI/CD без отдельной потребности.
 
 Команды: python dev.py bootstrap, check, smoke, serve, sync-agents, doctor,
-backup, restore-check [файл], restore-new [файл]. Эксплуатация — docs/OPERATIONS.md.
+backup, restore-check [файл], restore-new [файл] (допускают --production),
+deploy-init, deploy-up. Эксплуатация — docs/OPERATIONS.md, публикация — docs/DEPLOYMENT.md.
 Зависимости фиксируются uv.lock, обновляются осознанно с проверками.
 Тесты домена должны работать без платного API. Проверки не ослаблять ради успешного результата.
 После изменения поведения обновлять README, STATE, ROADMAP и решения по необходимости.

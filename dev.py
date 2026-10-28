@@ -70,6 +70,20 @@ def main() -> None:
             command
         ]
         run(sys.executable, "scripts/backup.py", action, *sys.argv[2:])
+    elif command == "deploy-init":
+        run(sys.executable, "scripts/deploy_init.py")
+    elif command == "deploy-up":
+        run(
+            "docker",
+            "compose",
+            "--env-file",
+            "deploy/.env",
+            "-f",
+            "deploy/compose.yaml",
+            "up",
+            "-d",
+            "--build",
+        )
     elif command == "doctor":
         run("git", "--version")
         uv("--version")
@@ -77,7 +91,7 @@ def main() -> None:
     else:
         print(
             "Команды: bootstrap, check, smoke, serve, doctor, sync-agents [--check], "
-            "backup, restore-check [файл], restore-new [файл]"
+            "backup, restore-check [файл], restore-new [файл], deploy-init, deploy-up"
         )
         if command != "help":
             raise SystemExit(2)

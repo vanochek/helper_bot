@@ -1,0 +1,73 @@
+name: helper-production
+services:
+  db:
+    image: postgres:18@sha256:979bccfde35445db618c65107d27d08c6c21339d8dc3ad4c830c6633947be0e4
+    environment:
+      POSTGRES_USER: helper_owner
+      POSTGRES_DB: helper
+      POSTGRES_PASSWORD: ${DB_OWNER_PASSWORD:?Запустите deploy-init}
+    volumes:
+      - database:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U helper_owner -d helper"]
+      interval: 3s
+      timeout: 5s
+      retries: 30
+    restart: unless-stopped
+  migrate:
+    build: ..
+    image: helper-bot:local
+    command: ["python", "deploy/migrate.py"]
+    environment:
+      DATABASE_URL: postgresql+psycopg://helper_owner:${DB_OWNER_PASSWORD}@db:5432/helper
+      DB_APP_PASSWORD: ${DB_APP_PASSWORD:?Запустите deploy-init}
+    depends_on:
+      db:
+        condition: service_healthy
+  app:
+    image: helper-bot:local
+    pull_policy: never
+    environment:
+      DATABASE_URL: postgresql+psycopg://helper_app:${DB_APP_PASSWORD}@db:5432/helper
+      APP_ORIGIN: ${APP_ORIGIN:?Укажите HTTPS origin}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-}
+      OPENAI_STT_MODEL: ${OPENAI_STT_MODEL:-}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready', timeout=5)"]
+      interval: 10s
+      timeout: 6s
+      retries: 10
+    restart: unless-stopped
+  gateway:
+    image: nginx:stable-alpine@sha256:47928bf67eb62a1863cb08d9ecb52d3e704304ba614eaee17884204677702951
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      app:
+        condition: service_healthy
+    restart: unless-stopped
+  https:
+    image: caddy:2-alpine@sha256:eb4d35b7452d1ab6171fbdbe8d9275b2301dad6dad92115d91e19fb9b24d510f
+    ports:
+      - "${BIND_HOST:-127.0.0.1}:${HTTP_PORT:-80}:80"
+      - "${BIND_HOST:-127.0.0.1}:${HTTPS_PORT:-443}:443"
+    environment:
+      DOMAIN: ${DOMAIN:?Укажите домен}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - certificates:/data
+      - caddy_config:/config
+    depends_on: [gateway]
+    restart: unless-stopped
+volumes:
+  database:
+  certificates:
+  caddy_config:

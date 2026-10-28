@@ -41,7 +41,8 @@ IP и cookie в него не попадают. dev.py serve отключает 
 
 ## Резервные копии
 
-Команды рассчитаны именно на локальный Compose-сервис db и базу helper:
+Без флагов команды используют локальный Compose-сервис db и базу helper.
+Для production-профиля добавьте --production (см. DEPLOYMENT.md):
 
 - python dev.py backup — согласованный pg_dump -Fc в backups/ с уникальным именем.
 - python dev.py restore-check [путь] — восстановить копию в новую случайную БД,

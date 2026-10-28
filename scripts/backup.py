@@ -9,6 +9,8 @@ from pathlib import Path
 from uuid import uuid4
 
 PREFIX = ["docker", "compose", "exec", "-T", "db"]
+DB_USER = "helper"
+PROFILE = "development"
 
 
 def command(*args: str, **kwargs):
@@ -18,10 +20,10 @@ def command(*args: str, **kwargs):
 def backup() -> Path:
     directory = Path("backups")
     directory.mkdir(exist_ok=True)
-    path = directory / f"helper-{datetime.now(UTC):%Y%m%dT%H%M%SZ}-{uuid4().hex[:8]}.dump"
+    path = directory / f"{PROFILE}-helper-{datetime.now(UTC):%Y%m%dT%H%M%SZ}-{uuid4().hex[:8]}.dump"
     try:
         with path.open("xb") as output:
-            command("pg_dump", "-U", "helper", "-d", "helper", "-Fc", stdout=output)
+            command("pg_dump", "-U", DB_USER, "-d", "helper", "-Fc", stdout=output)
     except BaseException:
         path.unlink(missing_ok=True)
         raise
@@ -33,13 +35,13 @@ def restore(path: Path, keep: bool = False) -> dict:
     if not path.is_file():
         raise ValueError("Файл резервной копии не найден")
     target = "restore_" + uuid4().hex
-    command("createdb", "-U", "helper", target)
+    command("createdb", "-U", DB_USER, target)
     try:
         with path.open("rb") as source:
             command(
                 "pg_restore",
                 "-U",
-                "helper",
+                DB_USER,
                 "-d",
                 target,
                 "--exit-on-error",
@@ -55,7 +57,7 @@ def restore(path: Path, keep: bool = False) -> dict:
         result = command(
             "psql",
             "-U",
-            "helper",
+            DB_USER,
             "-d",
             target,
             "-At",
@@ -73,14 +75,33 @@ def restore(path: Path, keep: bool = False) -> dict:
         if not keep:
             if not re.fullmatch(r"restore_[a-f0-9]{32}", target):
                 raise ValueError("Недопустимое имя временной БД")
-            command("dropdb", "-U", "helper", target)
+            command("dropdb", "-U", DB_USER, target)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("action", choices=["backup", "verify", "restore-new"])
     parser.add_argument("path", nargs="?", type=Path)
+    parser.add_argument(
+        "--production",
+        action="store_true",
+        help="Использовать отдельный профиль deploy/compose.yaml",
+    )
     args = parser.parse_args()
+    if args.production:
+        PREFIX = [
+            "docker",
+            "compose",
+            "--env-file",
+            "deploy/.env",
+            "-f",
+            "deploy/compose.yaml",
+            "exec",
+            "-T",
+            "db",
+        ]
+        DB_USER = "helper_owner"
+        PROFILE = "production"
     if args.action == "backup":
         backup()
     else:
