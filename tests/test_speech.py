@@ -58,7 +58,7 @@ def test_auth_origin_and_transcription(speech):
     start(client)
     assert upload(client, Origin="https://evil.example").status_code == 403
     response = upload(client)
-    assert response.json() == {"text": fake.result}
+    assert response.json() == {"text": fake.result, "simulated": False}
     assert response.headers["Cache-Control"] == "no-store"
     assert fake.calls == [(WEBM, "audio/webm")]
     assert client.get("/api/v1/entries").json() == []

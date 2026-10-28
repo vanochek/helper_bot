@@ -43,3 +43,9 @@ limit: 1–100 (по умолчанию 50), offset: 0–10000. Порядок: 
 [Текстовый диалог: POST/GET /chat/messages](CHAT.md).
 
 [Распознавание аудио: POST /speech/transcriptions](VOICE.md).
+
+## Режим обработки
+
+GET /api/v1/capabilities возвращает ai_mode: demo или openai, без секретов.
+POST /api/v1/speech/transcriptions дополнительно возвращает simulated: boolean.
+При true текст является фиксированным примером, а не распознанной речью.

@@ -6,6 +6,8 @@ from sqlalchemy import select
 from helper_bot.ai import AIUnavailable, Interpreter, OpenAIInterpreter
 from helper_bot.api import Db, Owner, same_origin
 from helper_bot.chat import MessageInput, Reply, RequestConflict, handle_message
+from helper_bot.config import Settings
+from helper_bot.demo import DemoInterpreter
 from helper_bot.models import ChatMessage
 from helper_bot.temporal_api import current_time
 
@@ -13,7 +15,7 @@ router = APIRouter(prefix="/api/v1/chat")
 
 
 def interpreter() -> Interpreter:
-    return OpenAIInterpreter()
+    return DemoInterpreter() if Settings().ai_mode == "demo" else OpenAIInterpreter()
 
 
 @router.post("/messages", dependencies=[Depends(same_origin)])

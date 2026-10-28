@@ -38,6 +38,11 @@ async def database_error(request: Request, exc: SQLAlchemyError) -> JSONResponse
     return JSONResponse({"detail": "Хранилище временно недоступно"}, status_code=503)
 
 
+@app.get("/api/v1/capabilities")
+def capabilities() -> dict[str, str]:
+    return {"ai_mode": Settings().ai_mode}
+
+
 @app.get("/health/live")
 def live() -> dict[str, str]:
     return {"status": "ok"}

@@ -5,6 +5,8 @@ from pydantic import BaseModel
 from starlette.concurrency import run_in_threadpool
 
 from helper_bot.api import Owner, same_origin
+from helper_bot.config import Settings
+from helper_bot.demo import DemoTranscriber
 from helper_bot.speech import (
     FORMATS,
     MAX_AUDIO_BYTES,
@@ -18,11 +20,12 @@ router = APIRouter(prefix="/api/v1/speech")
 
 
 def transcriber() -> Transcriber:
-    return OpenAITranscriber()
+    return DemoTranscriber() if Settings().ai_mode == "demo" else OpenAITranscriber()
 
 
 class Transcript(BaseModel):
     text: str
+    simulated: bool = False
 
 
 @router.post("/transcriptions", dependencies=[Depends(same_origin)])
@@ -47,4 +50,4 @@ async def transcribe(
         raise HTTPException(422, "Речь не распознана. Попробуйте ещё раз или введите текст.")
     if len(result) > 2000:
         raise HTTPException(422, "Распознанный текст слишком длинный. Сократите сообщение.")
-    return Transcript(text=result)
+    return Transcript(text=result, simulated=isinstance(adapter, DemoTranscriber))

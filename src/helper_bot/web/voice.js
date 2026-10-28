@@ -49,7 +49,9 @@ recordButton.addEventListener("click", async () => {
           method: "POST", headers: {"Content-Type": mime}, body: blob
         });
         input.value = result.text;
-        voiceStatus.textContent = "Проверьте распознанный текст и нажмите «Отправить».";
+        voiceStatus.textContent = result.simulated
+          ? "Это заранее заданный пример, а не распознавание записи. Исправьте текст и нажмите «Отправить»."
+          : "Проверьте распознанный текст и нажмите «Отправить».";
       } catch (error) { voiceStatus.textContent = `${error.message} Текстовый ввод доступен.`; }
       finally { chunks = []; recorder = null; busy(false); updateRecordButton(); input.focus(); }
     };

@@ -81,6 +81,12 @@ retry.addEventListener("click", () => submit(pending.text, true));
 async function init() {
   busy(true);
   try {
+    const capabilities = await request("/api/v1/capabilities");
+    const demo = capabilities.ai_mode === "demo";
+    document.querySelector("#ai-mode").textContent = demo
+      ? "Деморежим: AI и распознавание имитируются локально, без ключей и запросов в OpenAI. Записи сохраняются в настоящую базу."
+      : "OpenAI: текст и записанный голос отправляются провайдеру для обработки.";
+    document.querySelector("#demo-help").hidden = !demo;
     timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const session = await request("/api/v1/session", {method: "POST",
       headers: {"Content-Type": "application/json"}, body: JSON.stringify({timezone})});

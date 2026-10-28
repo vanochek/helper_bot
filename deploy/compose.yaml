@@ -30,6 +30,7 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://helper_app:${DB_APP_PASSWORD}@db:5432/helper
       APP_ORIGIN: ${APP_ORIGIN:?Укажите HTTPS origin}
+      AI_MODE: ${AI_MODE:-demo}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_MODEL: ${OPENAI_MODEL:-}
       OPENAI_STT_MODEL: ${OPENAI_STT_MODEL:-}

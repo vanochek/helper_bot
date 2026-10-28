@@ -70,6 +70,8 @@ def main() -> None:
             command
         ]
         run(sys.executable, "scripts/backup.py", action, *sys.argv[2:])
+    elif command == "ai-mode":
+        run(sys.executable, "scripts/ai_mode.py", *sys.argv[2:])
     elif command == "deploy-init":
         run(sys.executable, "scripts/deploy_init.py")
     elif command == "deploy-up":
@@ -91,7 +93,8 @@ def main() -> None:
     else:
         print(
             "Команды: bootstrap, check, smoke, serve, doctor, sync-agents [--check], "
-            "backup, restore-check [файл], restore-new [файл], deploy-init, deploy-up"
+            "backup, restore-check [файл], restore-new [файл], deploy-init, deploy-up, "
+            "ai-mode {demo|openai} [--production]"
         )
         if command != "help":
             raise SystemExit(2)

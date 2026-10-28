@@ -60,3 +60,5 @@ Responses вызывается с store=false; это не обещание от
 
 Контракт SDK сверялся с официальной документацией:
 https://developers.openai.com/api/docs/guides/structured-outputs
+
+Без ключей используйте AI_MODE=demo. Поддерживаемые шаблоны и переключение — DEMO.md.
