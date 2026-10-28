@@ -1,12 +1,12 @@
 import hashlib
 import secrets
-from datetime import date
+from datetime import date, datetime
 from typing import Literal, Self
 from uuid import UUID
 from zoneinfo import ZoneInfo
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, model_validator
-from sqlalchemy import select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import Session
 
 from helper_bot.models import BrowserSession, Entry
@@ -67,6 +67,36 @@ class EntryRepository:
     def get(self, entry_id: UUID) -> Entry | None:
         return self.db.scalar(
             select(Entry).where(Entry.session_id == self.owner_id, Entry.id == entry_id)
+        )
+
+    def find(
+        self,
+        start: date | None,
+        end: date | None,
+        start_at: datetime | None,
+        end_at: datetime | None,
+        query: str | None,
+        limit: int,
+        offset: int,
+    ) -> list[Entry]:
+        if not 1 <= limit <= 100 or not 0 <= offset <= 10000:
+            raise ValueError("Некорректная пагинация")
+        statement = select(Entry).where(Entry.session_id == self.owner_id)
+        if start is not None and end is not None and start_at is not None and end_at is not None:
+            statement = statement.where(
+                or_(
+                    and_(Entry.scheduled_at >= start_at, Entry.scheduled_at < end_at),
+                    and_(Entry.scheduled_on >= start, Entry.scheduled_on < end),
+                )
+            )
+        if query is not None:
+            statement = statement.where(
+                Entry.search_vector.op("@@")(func.plainto_tsquery("russian", query))
+            )
+        return list(
+            self.db.scalars(
+                statement.order_by(Entry.created_at.desc(), Entry.id).limit(limit).offset(offset)
+            )
         )
 
     def list_recent(self, limit: int = 50, offset: int = 0) -> list[Entry]:

@@ -1,7 +1,8 @@
 from datetime import date, datetime
 from uuid import UUID, uuid4
 
-from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, String, func
+from sqlalchemy import CheckConstraint, Computed, DateTime, ForeignKey, Index, String, func
+from sqlalchemy.dialects.postgresql import TSVECTOR
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -36,11 +37,16 @@ class Entry(Base):
         Index("ix_entries_owner_time", "session_id", "scheduled_at"),
         Index("ix_entries_owner_date", "session_id", "scheduled_on"),
         Index("ix_entries_owner_created", "session_id", "created_at"),
+        Index("ix_entries_search_ru", "search_vector", postgresql_using="gin"),
     )
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     session_id: Mapped[UUID] = mapped_column(ForeignKey("browser_sessions.id", ondelete="CASCADE"))
     kind: Mapped[str] = mapped_column(String(16))
     title: Mapped[str] = mapped_column(String(500))
+    search_vector: Mapped[str] = mapped_column(
+        TSVECTOR,
+        Computed("to_tsvector('russian', title || ' ' || coalesce(details, ''))", persisted=True),
+    )
     details: Mapped[str | None]
     scheduled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     scheduled_on: Mapped[date | None]
