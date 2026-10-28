@@ -5,4 +5,4 @@
 - [x] Окружение, PostgreSQL, API, Alembic и команды разработки.
 - [x] Повторный bootstrap, Ruff, mypy, 3 теста и smoke с реальной БД прошли.
 - [x] Работа выполнена в codex/repository-foundation.
-- [ ] Слияние и push: результат подтверждается Git и финальным отчётом.
+- [x] Выполнено локальное fast-forward слияние. Результат push проверяется по origin/main и финальному отчёту.
