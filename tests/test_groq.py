@@ -77,6 +77,58 @@ def test_structured_intent(provider):
     assert result.title == "Позвонить Ивану"
 
 
+def test_meeting_uses_local_time_schema(provider):
+    def handler(request):
+        schema = json.loads(request.content)["response_format"]["json_schema"]["schema"]
+        temporal = schema["$defs"]["TemporalCandidate"]
+        clock = temporal["properties"]["local_time"]["anyOf"][0]
+        assert "format" not in clock
+        assert "pattern" in clock
+        assert set(temporal["required"]) == set(temporal["properties"])
+        assert temporal["additionalProperties"] is False
+        return httpx.Response(
+            200,
+            json=completion(
+                {
+                    "action": "create",
+                    "kind": "meeting",
+                    "title": "Встреча с Анной",
+                    "query": None,
+                    "question": None,
+                    "temporal": {"relation": "tomorrow", "local_time": "15:00:00"},
+                }
+            ),
+        )
+
+    provider(handler)
+    result = interpreter().interpret(
+        ["Создай встречу с Анной завтра в 15:00"], datetime.now(UTC), "Europe/Moscow"
+    )
+    assert result.temporal.local_time.hour == 15
+    assert result.temporal.local_time.tzinfo is None
+
+
+@pytest.mark.parametrize("clock", ["15:00:00+03:00", "25:00:00"])
+def test_provider_time_still_validated_by_domain(provider, clock):
+    provider(
+        lambda request: httpx.Response(
+            200,
+            json=completion(
+                {
+                    "action": "create",
+                    "kind": "meeting",
+                    "title": "Встреча",
+                    "query": None,
+                    "question": None,
+                    "temporal": {"relation": "tomorrow", "local_time": clock},
+                }
+            ),
+        )
+    )
+    with pytest.raises(AIUnavailable, match="некорректный ответ"):
+        interpreter().interpret(["Тест"], datetime.now(UTC), "UTC")
+
+
 @pytest.mark.parametrize("status", [401, 403, 429, 500])
 def test_errors_are_sanitized(provider, status):
     provider(lambda request: httpx.Response(status, json={"error": {"message": "SECRET"}}))

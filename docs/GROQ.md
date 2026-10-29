@@ -40,3 +40,7 @@ Chat Completions со строгой JSON-схемой и Audio Transcriptions (
 
 Документация: https://console.groq.com/docs/structured-outputs,
 https://console.groq.com/docs/speech-to-text.
+
+Для местного времени в схеме провайдера используется шаблон ЧЧ:ММ:СС вместо
+format=time. Ответ дополнительно проверяется доменной моделью; смещения запрещены.
+Ошибка несовпадения схемы обозначается отдельно от недоступности провайдера.
