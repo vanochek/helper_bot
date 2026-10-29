@@ -101,4 +101,14 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except subprocess.CalledProcessError as exc:
+        print("Команда завершилась с ошибкой. Подробности приведены выше.", file=sys.stderr)
+        if len(sys.argv) > 1 and sys.argv[1] == "deploy-up":
+            print(
+                "Если Docker сообщает auth.docker.io / EOF: проверьте сеть и прокси "
+                "Docker Desktop. Инструкция: docs/DOCKER_TROUBLESHOOTING.md.",
+                file=sys.stderr,
+            )
+        raise SystemExit(exc.returncode) from None
