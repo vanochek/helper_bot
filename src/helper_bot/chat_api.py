@@ -29,7 +29,7 @@ def send(
         return handle_message(db, owner.id, message, ai, current_time())
     except AIUnavailable as exc:
         db.rollback()
-        raise HTTPException(503, str(exc)) from exc
+        raise HTTPException(503, str(exc), headers={"X-Request-Outcome": "not-applied"}) from exc
     except RequestConflict as exc:
         db.rollback()
         raise HTTPException(409, str(exc)) from exc

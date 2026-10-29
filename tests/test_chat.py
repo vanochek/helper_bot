@@ -259,3 +259,22 @@ def test_missing_key_is_explicit(monkeypatch):
     monkeypatch.setenv("OPENAI_MODEL", "")
     with pytest.raises(AIUnavailable, match="AI не настроен"):
         OpenAIInterpreter().interpret(["Привет"], datetime.now(UTC), "UTC")
+
+
+def test_same_text_new_request_failure_and_recovery(chat):
+    client, fake = chat
+    text = "Создай задачу купить молоко завтра"
+    fake.results.extend([intent(), AIUnavailable("Нет соединения с Groq"), intent()])
+    first = send(client, text)
+    assert first.status_code == 200
+    key = uuid4()
+    failed = send(client, text, key)
+    assert failed.status_code == 503
+    assert failed.headers["X-Request-Outcome"] == "not-applied"
+    assert len(client.get("/api/v1/entries").json()) == 1
+    assert len(client.get("/api/v1/chat/messages").json()) == 1
+    recovered = send(client, text, key)
+    assert recovered.status_code == 200
+    assert send(client, text, key).json() == recovered.json()
+    assert len(fake.calls) == 3
+    assert len(client.get("/api/v1/entries").json()) == 2

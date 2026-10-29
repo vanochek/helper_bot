@@ -1,8 +1,10 @@
 """Адаптеры Groq через совместимый HTTP-протокол; без отката на имитацию."""
 
 import json
+from collections.abc import Callable
 from datetime import datetime
-from typing import Any
+from time import sleep
+from typing import Any, TypeVar
 
 from openai import APIConnectionError, APIStatusError, OpenAI, OpenAIError
 from pydantic import ValidationError
@@ -12,6 +14,18 @@ from helper_bot.config import Settings
 from helper_bot.speech import FORMATS, SpeechUnavailable
 
 BASE_URL = "https://api.groq.com/openai/v1"
+
+
+Result = TypeVar("Result")
+
+
+def connection_retry(operation: Callable[[], Result]) -> Result:
+    """Повторить только сетевой отказ один раз; операция ещё не сохраняет данные."""
+    try:
+        return operation()
+    except APIConnectionError:
+        sleep(0.3)
+        return operation()
 
 
 def provider_error(exc: OpenAIError) -> str:
@@ -60,11 +74,12 @@ class GroqInterpreter:
         settings = Settings()
         if not settings.groq_api_key.get_secret_value() or not settings.groq_model:
             raise AIUnavailable("Задайте GROQ_API_KEY и GROQ_MODEL на сервере.")
-        try:
+
+        def operation() -> Intent:
             with OpenAI(
                 api_key=settings.groq_api_key.get_secret_value(),
                 base_url=BASE_URL,
-                timeout=25,
+                timeout=10,
                 max_retries=0,
             ) as client:
                 result = client.chat.completions.create(
@@ -99,6 +114,9 @@ class GroqInterpreter:
                 if message.refusal or not message.content:
                     raise AIUnavailable("Groq не вернул намерение. Переформулируйте запрос.")
                 return Intent.model_validate_json(message.content)
+
+        try:
+            return connection_retry(operation)
         except OpenAIError as exc:
             raise AIUnavailable(provider_error(exc)) from None
         except ValidationError:
@@ -110,11 +128,12 @@ class GroqTranscriber:
         settings = Settings()
         if not settings.groq_api_key.get_secret_value() or not settings.groq_stt_model:
             raise SpeechUnavailable("Задайте GROQ_API_KEY и GROQ_STT_MODEL на сервере.")
-        try:
+
+        def operation() -> str:
             with OpenAI(
                 api_key=settings.groq_api_key.get_secret_value(),
                 base_url=BASE_URL,
-                timeout=30,
+                timeout=10,
                 max_retries=0,
             ) as client:
                 result = client.audio.transcriptions.create(
@@ -123,5 +142,8 @@ class GroqTranscriber:
                     language="ru",
                 )
                 return result.text.strip()
+
+        try:
+            return connection_retry(operation)
         except OpenAIError as exc:
             raise SpeechUnavailable(provider_error(exc)) from None

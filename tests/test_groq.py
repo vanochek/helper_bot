@@ -172,3 +172,57 @@ def test_connection_failure_is_clear(provider):
     provider(handler)
     with pytest.raises(AIUnavailable, match="Нет соединения"):
         interpreter().interpret(["Тест"], datetime.now(UTC), "UTC")
+
+
+def test_single_connection_retry_recovers(provider, monkeypatch):
+    monkeypatch.setattr("helper_bot.groq.sleep", lambda _: None)
+    calls = []
+
+    def handler(request):
+        calls.append(request)
+        if len(calls) == 1:
+            raise httpx.ConnectError("Temporary EOF", request=request)
+        return httpx.Response(
+            200,
+            json=completion(
+                {
+                    "action": "create",
+                    "kind": "task",
+                    "title": "Купить молоко",
+                    "query": None,
+                    "question": None,
+                    "temporal": None,
+                }
+            ),
+        )
+
+    provider(handler)
+    assert interpreter().interpret(["Тест"], datetime.now(UTC), "UTC").action == "create"
+    assert len(calls) == 2
+
+
+def test_connection_retry_is_bounded(provider, monkeypatch):
+    monkeypatch.setattr("helper_bot.groq.sleep", lambda _: None)
+    calls = []
+
+    def handler(request):
+        calls.append(request)
+        raise httpx.ConnectError("Persistent EOF", request=request)
+
+    provider(handler)
+    with pytest.raises(AIUnavailable):
+        interpreter().interpret(["Тест"], datetime.now(UTC), "UTC")
+    assert len(calls) == 2
+
+
+def test_quota_is_not_automatically_retried(provider):
+    calls = []
+
+    def handler(request):
+        calls.append(request)
+        return httpx.Response(429, json={"error": {"message": "quota"}})
+
+    provider(handler)
+    with pytest.raises(AIUnavailable):
+        interpreter().interpret(["Тест"], datetime.now(UTC), "UTC")
+    assert len(calls) == 1

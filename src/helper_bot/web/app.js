@@ -4,12 +4,13 @@ const input = document.querySelector("#message");
 const send = document.querySelector("#send");
 const cancel = document.querySelector("#cancel");
 const retry = document.querySelector("#retry");
+const editFailed = document.querySelector("#edit-failed");
 const statusLine = document.querySelector("#status");
 let pending = null;
 const pendingKey = "helper-pending-message";
 let timezone = "UTC";
 function busy(value) {
-  send.disabled = value; cancel.disabled = value; input.disabled = value; retry.disabled = value;
+  send.disabled = value; cancel.disabled = value; input.disabled = value; retry.disabled = value; editFailed.disabled = value;
 }
 function bubble(text, role) {
   document.querySelector("#welcome")?.remove();
@@ -43,26 +44,39 @@ async function request(path, options = {}) {
   if (!response.ok) {
     const error = new Error(typeof body.detail === "string" ? body.detail : "Проверьте параметры запроса.");
     error.status = response.status;
+    error.notApplied = response.headers.get("X-Request-Outcome") === "not-applied";
     throw error;
   }
   return body;
 }
 async function submit(text, repeat = false) {
-  busy(true); retry.hidden = true; statusLine.textContent = "Обрабатываю…";
+  busy(true); retry.hidden = true; editFailed.hidden = true; statusLine.textContent = "Обрабатываю…";
   if (!repeat) {
     pending = {request_id: crypto.randomUUID(), text};
     sessionStorage.setItem(pendingKey, JSON.stringify(pending));
     bubble(text, "user");
   }
+  // До ответа нового обращения его результат снова неизвестен.
+  delete pending.notApplied;
+  sessionStorage.setItem(pendingKey, JSON.stringify(pending));
   try {
     const reply = await request("/api/v1/chat/messages", {
-      method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(pending)
+      method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({request_id: pending.request_id, text: pending.text})
     });
     answer(reply, true); pending = null; sessionStorage.removeItem(pendingKey);
     input.value = ""; statusLine.textContent = "";
   } catch (error) {
     statusLine.textContent = `${error.message} Повтор отправит тот же запрос без дублирования.`;
     retry.hidden = false;
+    if (error.notApplied) {
+      pending.notApplied = true;
+      sessionStorage.setItem(pendingKey, JSON.stringify(pending));
+      editFailed.hidden = false;
+      statusLine.textContent = `${error.message} Этот запрос не сохранён. Можно повторить отправку или изменить сообщение.`;
+    } else {
+      delete pending.notApplied;
+      sessionStorage.setItem(pendingKey, JSON.stringify(pending));
+    }
     if ([400, 403, 409, 422].includes(error.status)) {
       pending = null; sessionStorage.removeItem(pendingKey); retry.hidden = true;
       statusLine.textContent = error.message;
@@ -79,6 +93,12 @@ document.querySelector("#form").addEventListener("submit", event => {
 });
 cancel.addEventListener("click", () => submit("Отмена"));
 retry.addEventListener("click", () => submit(pending.text, true));
+editFailed.addEventListener("click", () => {
+  if (!pending?.notApplied) return;
+  input.value = pending.text; pending = null; sessionStorage.removeItem(pendingKey);
+  retry.hidden = true; editFailed.hidden = true; busy(false); input.focus();
+  statusLine.textContent = "Неотправленный запрос снят. Исправьте сообщение или введите новое.";
+});
 async function init() {
   busy(true);
   try {
@@ -106,6 +126,7 @@ async function init() {
       } else {
         bubble(pending.text, "user"); send.disabled = true; cancel.disabled = true;
         input.disabled = true; retry.hidden = false;
+        editFailed.hidden = !pending.notApplied;
         statusLine.textContent = "Остался незавершённый запрос. Повторите отправку для проверки результата.";
       }
     }
