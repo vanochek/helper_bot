@@ -8,6 +8,7 @@ from helper_bot.api import Db, Owner, same_origin
 from helper_bot.chat import MessageInput, Reply, RequestConflict, handle_message
 from helper_bot.config import Settings
 from helper_bot.demo import DemoInterpreter
+from helper_bot.groq import GroqInterpreter
 from helper_bot.models import ChatMessage
 from helper_bot.temporal_api import current_time
 
@@ -15,6 +16,8 @@ router = APIRouter(prefix="/api/v1/chat")
 
 
 def interpreter() -> Interpreter:
+    if Settings().ai_mode == "groq":
+        return GroqInterpreter()
     return DemoInterpreter() if Settings().ai_mode == "demo" else OpenAIInterpreter()
 
 

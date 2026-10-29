@@ -30,6 +30,9 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://helper_app:${DB_APP_PASSWORD}@db:5432/helper
       APP_ORIGIN: ${APP_ORIGIN:?Укажите HTTPS origin}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      GROQ_MODEL: ${GROQ_MODEL:-openai/gpt-oss-120b}
+      GROQ_STT_MODEL: ${GROQ_STT_MODEL:-whisper-large-v3-turbo}
       AI_MODE: ${AI_MODE:-demo}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_MODEL: ${OPENAI_MODEL:-}

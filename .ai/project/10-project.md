@@ -11,7 +11,7 @@ LLM не выполняет SQL и не подтверждает несохра�
 
 Команды: python dev.py bootstrap, check, smoke, serve, sync-agents, doctor,
 backup, restore-check [файл], restore-new [файл] (допускают --production),
-deploy-init, deploy-up, ai-mode {demo|openai} [--production]. Эксплуатация — docs/OPERATIONS.md, публикация — docs/DEPLOYMENT.md.
+deploy-init, deploy-up, ai-mode {demo|groq|openai} [--production]. Эксплуатация — docs/OPERATIONS.md, публикация — docs/DEPLOYMENT.md.
 Зависимости фиксируются uv.lock, обновляются осознанно с проверками.
 Тесты домена должны работать без платного API. Проверки не ослаблять ради успешного результата.
 После изменения поведения обновлять README, STATE, ROADMAP и решения по необходимости.

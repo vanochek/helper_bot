@@ -7,6 +7,7 @@ from starlette.concurrency import run_in_threadpool
 from helper_bot.api import Owner, same_origin
 from helper_bot.config import Settings
 from helper_bot.demo import DemoTranscriber
+from helper_bot.groq import GroqTranscriber
 from helper_bot.speech import (
     FORMATS,
     MAX_AUDIO_BYTES,
@@ -20,6 +21,8 @@ router = APIRouter(prefix="/api/v1/speech")
 
 
 def transcriber() -> Transcriber:
+    if Settings().ai_mode == "groq":
+        return GroqTranscriber()
     return DemoTranscriber() if Settings().ai_mode == "demo" else OpenAITranscriber()
 
 

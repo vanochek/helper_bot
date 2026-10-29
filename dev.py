@@ -94,7 +94,7 @@ def main() -> None:
         print(
             "Команды: bootstrap, check, smoke, serve, doctor, sync-agents [--check], "
             "backup, restore-check [файл], restore-new [файл], deploy-init, deploy-up, "
-            "ai-mode {demo|openai} [--production]"
+            "ai-mode {demo|groq|openai} [--production]"
         )
         if command != "help":
             raise SystemExit(2)
