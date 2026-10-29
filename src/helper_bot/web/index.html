@@ -1,30 +1,16 @@
 <!doctype html>
-<html lang="ru">
+<html lang="ru" data-theme="dark">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Личный помощник</title><link rel="stylesheet" href="/static/style.css">
-<script src="/static/app.js" defer></script><script src="/static/voice.js" defer></script></head>
-<body><main>
-<header><h1>Личный помощник</h1><p>Задачи, напоминания и встречи — напишите своими словами.</p></header>
-<p id="zone"></p>
-<p class="note">История привязана к этому браузеру. Очистка cookie лишит доступа к записям.
-Запись начинается только по кнопке.</p>
-<p id="ai-mode" class="note" role="status">Определяю режим обработки…</p>
-<details id="demo-help" hidden><summary>Примеры команд имитатора</summary>
-<p>«Создай задачу купить молоко завтра», «Напомни завтра позвонить Ивану» (затем «в 10:00»),
-«Создай встречу с Анной завтра в 15:00», «Покажи планы на завтра», «Найди задачу про молоко».</p>
-<p>Голосовая заглушка всегда возвращает «Напомни завтра в 10:00 позвонить Ивану»,
-независимо от записи. Распознавание речи не выполняется. Можно исправить текст перед отправкой.</p></details>
-<section id="messages" aria-label="История диалога" aria-live="polite"></section>
-<p id="status" role="status"></p>
-<form id="form"><label for="message">Ваше сообщение</label>
-<textarea id="message" maxlength="2000" rows="3" required placeholder="Напомни завтра в 10 позвонить Ивану"></textarea>
-<div class="actions"><button id="send" type="submit" disabled>Отправить</button>
-<button id="cancel" type="button" disabled>Отменить уточнение</button>
-<button id="retry" type="button" hidden>Повторить отправку</button></div></form>
-<div class="actions"><button id="record" type="button" disabled>Записать голос</button>
-<button id="discard-audio" type="button" hidden>Отменить запись</button>
-<button id="stop-speech" type="button">Остановить озвучивание</button></div>
-<label><input id="speak" type="checkbox"> Озвучивать новые ответы</label>
-<p id="voice-status" role="status"></p>
-<p class="note">Например: «Какие планы на завтра?» или «Найди задачу про презентацию».</p>
-</main></body></html>
+<meta name="color-scheme" content="dark light"><title>Орбита · Личный помощник</title>
+<link rel="stylesheet" href="/static/style.css"><script src="/static/app.js" defer></script><script src="/static/voice.js" defer></script></head>
+<body><main class="workspace">
+<aside class="sidebar"><a class="brand" href="/" aria-label="Орбита — главная"><span class="brand-icon">◈</span> орбита<span class="badge">BETA</span></a>
+<div class="sidebar-body"><p class="eyebrow">ЛИЧНОЕ ПРОСТРАНСТВО</p><div class="nav-active"><span>✦</span> Ваш ассистент <span class="live-dot"></span></div>
+<div class="sidebar-copy"><h2>Меньше рутины.<br>Больше ясности.</h2><p>Соберите задачи, встречи и напоминания в одном диалоге.</p></div>
+<p class="eyebrow">БЫСТРЫЙ СТАРТ</p><div class="shortcuts"><button data-prompt="Создай задачу купить молоко завтра"><span>✓</span> Новая задача <b>↗</b></button><button data-prompt="Напомни завтра в 10:00 позвонить Ивану"><span>◷</span> Напоминание <b>↗</b></button><button data-prompt="Создай встречу с Анной завтра в 15:00"><span>▦</span> Встреча <b>↗</b></button></div></div>
+<footer class="sidebar-footer"><span class="privacy-icon">◇</span><div>Ваше пространство<p>История хранится для этого браузера. Очистка cookie лишит доступа.</p></div></footer></aside>
+<section class="main-panel"><header class="topbar"><div><span class="eyebrow">ВАШ АССИСТЕНТ</span><h1>Всё начинается с диалога</h1></div><button id="theme-toggle" class="theme-button" type="button" aria-label="Включить светлую тему">☀ <span>Светлая тема</span></button></header>
+<div class="context-bar"><span><i class="live-dot"></i> Личное пространство</span><span id="zone">Подключение…</span></div>
+<section class="conversation"><div id="messages" role="log" aria-label="История диалога" aria-live="polite"><div id="welcome" class="welcome"><div class="orb">✦</div><p class="eyebrow">ОСВОБОДИТЕ МЕСТО ДЛЯ ВАЖНОГО</p><h2>Что у вас в планах?</h2><p>Расскажите, что нужно сделать.<br>Я помогу сохранить задачу и подобрать время.</p><div class="suggestions"><button data-prompt="Покажи планы на завтра">Планы на завтра <span>↗</span></button><button data-prompt="Найди задачу про презентацию">Найти запись <span>↗</span></button></div></div></div>
+<div class="composer-area"><p id="status" role="status"></p><form id="form"><label class="sr-only" for="message">Ваше сообщение</label><textarea id="message" maxlength="2000" rows="2" required placeholder="Напишите задачу или задайте вопрос…"></textarea><div class="composer-tools"><button id="record" type="button" disabled>Записать голос</button><span class="keyboard-hint">Ctrl + Enter для отправки</span><button id="send" class="primary" type="submit" disabled>Отправить ↗</button></div></form><div class="secondary-tools"><label class="speak-label"><input id="speak" type="checkbox"> Озвучивать ответы</label><button id="stop-speech" type="button">Остановить озвучивание</button><button id="cancel" type="button" disabled>Отменить уточнение</button><button id="retry" type="button" hidden>Повторить отправку</button><button id="discard-audio" type="button" hidden>Отменить запись</button></div><p id="voice-status" role="status"></p></div></section>
+<footer class="mode-footer"><p id="ai-mode" role="status">Определяю режим обработки…</p><details id="demo-help" hidden><summary>Как работает деморежим</summary><p>Команды: «Создай задачу купить молоко завтра», «Напомни завтра позвонить Ивану», «Создай встречу с Анной завтра в 15:00».</p><p>Голос не распознаётся: заглушка возвращает «Напомни завтра в 10:00 позвонить Ивану». Проверьте и исправьте текст перед отправкой. Запись начинается только по кнопке.</p></details></footer></section></main></body></html>

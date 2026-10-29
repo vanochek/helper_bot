@@ -12,6 +12,7 @@ function busy(value) {
   send.disabled = value; cancel.disabled = value; input.disabled = value; retry.disabled = value;
 }
 function bubble(text, role) {
+  document.querySelector("#welcome")?.remove();
   const node = document.createElement("div");
   node.className = `message ${role}`;
   node.textContent = text;
@@ -111,3 +112,29 @@ async function init() {
   } catch (error) { statusLine.textContent = `${error.message} Обновите страницу для повтора.`; }
 }
 init();
+
+// Настройка темы остаётся только в текущем браузере.
+const themeButton = document.querySelector("#theme-toggle");
+function setTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+  const label = theme === "dark" ? "Светлая тема" : "Тёмная тема";
+  themeButton.replaceChildren(document.createTextNode(theme === "dark" ? "☀ " : "☾ "));
+  const caption = document.createElement("span"); caption.textContent = label;
+  themeButton.append(caption); themeButton.setAttribute("aria-label", `Включить: ${label}`);
+}
+try { setTheme(localStorage.getItem("orbita-theme") === "light" ? "light" : "dark"); } catch { setTheme("dark"); }
+themeButton.addEventListener("click", () => {
+  const theme = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+  setTheme(theme); try { localStorage.setItem("orbita-theme", theme); } catch { /* Настройка действует до обновления. */ }
+});
+document.querySelectorAll("[data-prompt]").forEach(button => {
+  button.addEventListener("click", () => {
+    if (input.disabled) return;
+    input.value = button.dataset.prompt; input.focus();
+  });
+});
+input.addEventListener("keydown", event => {
+  if (event.key === "Enter" && (event.ctrlKey || event.metaKey) && !send.disabled) {
+    event.preventDefault(); document.querySelector("#form").requestSubmit();
+  }
+});
